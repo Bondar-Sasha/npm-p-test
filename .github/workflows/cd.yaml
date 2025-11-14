@@ -49,6 +49,8 @@ jobs:
         id: pack
         run: |
           node versionSubstitution.js ./package.json ${{ steps.get_versions.outputs.PREVIOUS_VERSION }}
+          ls
+          cat package.json
           FILE=$(npm pack .)
           echo "file=$FILE" >> $GITHUB_OUTPUT
 
