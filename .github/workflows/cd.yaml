@@ -31,10 +31,10 @@ jobs:
 
       - name: Calculate local shasum
         id: local
-        run: |          
-          LOCAL_HASH=$(openssl dgst -sha512 -binary "$TGZ_FILE" | openssl base64 | tr -d '\n')
-          
-          echo "local_hash=$LOCAL_HASH" >> $GITHUB_OUTPUT
+        run: |
+          LOCAL_HASH=$(openssl dgst -sha512 -binary "${{ steps.pack.outputs.file }}" | openssl base64 | tr -d '\n')
+          echo "local_hash=sha512-$LOCAL_HASH" >> $GITHUB_OUTPUT
+
 
       # Сравнение хэшей
       - name: Compare hashes
