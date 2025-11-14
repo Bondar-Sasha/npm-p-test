@@ -26,7 +26,7 @@ jobs:
       - name: Get remote shasum
         id: remote
         run: |
-          REMOTE_HASH=$(npm view nd-test-mkh dist.shasum)
+          REMOTE_HASH=$(npm view nd-test-mkh dist.integrity)
           echo "remote_hash=$REMOTE_HASH" >> $GITHUB_OUTPUT
 
       - name: Calculate local shasum
