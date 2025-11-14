@@ -29,11 +29,10 @@ jobs:
           REMOTE_HASH=$(npm view nd-test-mkh dist.shasum)
           echo "remote_hash=$REMOTE_HASH" >> $GITHUB_OUTPUT
 
-      # Вычисление SHA-1 локального пакета
       - name: Calculate local shasum
         id: local
         run: |
-          LOCAL_HASH=$(sha1sum ${{ steps.pack.outputs.file }} | awk '{print $1}')
+          LOCAL_HASH=$(npm view ${{ steps.pack.outputs.file }} --json | jq -r '.dist.shasum')
           echo "local_hash=$LOCAL_HASH" >> $GITHUB_OUTPUT
 
       # Сравнение хэшей
