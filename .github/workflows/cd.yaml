@@ -26,7 +26,7 @@ jobs:
         id: get_versions
         run: |
       
-          VERSIONS_JSON=$(npm view $PACKAGE_NAME versions --json)
+          VERSIONS_JSON=$(npm view ${{ env.PACKAGE_NAME }} versions --json)
           
           TWO_LATEST_DESC=$(echo "$VERSIONS_JSON" | jq -r '.[-2:] | reverse | .[]')
           
