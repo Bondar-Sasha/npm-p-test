@@ -49,7 +49,7 @@ jobs:
       - name: Pack local package
         id: pack
         run: |
-          node versionSubstitution.js ./package.json ${{ steps.get_versions.outputs.previous_version }}
+          node versionSubstitution.js ./package.json ${{ steps.get_versions.outputs.latest_version }}
           FILE=$(npm pack .)
           echo "file=$FILE" >> $GITHUB_OUTPUT
 
