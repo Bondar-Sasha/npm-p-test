@@ -32,7 +32,10 @@ jobs:
       - name: Calculate local shasum
         id: local
         run: |
-          LOCAL_HASH=$(npm view ${{ steps.pack.outputs.file }} --json | jq -r '.dist.shasum')
+          HEX_HASH=$(sha1sum ${{ steps.pack.outputs.file }} | awk '{print $1}')
+          
+          LOCAL_HASH=$(echo $HEX_HASH | xxd -r -p | base64)
+          
           echo "local_hash=$LOCAL_HASH" >> $GITHUB_OUTPUT
 
       # Сравнение хэшей
