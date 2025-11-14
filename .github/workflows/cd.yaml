@@ -1,5 +1,10 @@
 name: CD
 
+env:
+  NODE_VERSION: '20'
+  PACKAGE_NAME: 'nd-test-mkh'
+  NPM_REGISTRY: 'https://registry.npmjs.org/'
+
 on:
   push:
     branches: [main]
@@ -15,19 +20,37 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ env.NODE_VERSION }}
 
-      - name: Pack local package
-        id: pack
+      - name: Get Last Two NPM Versions
+        id: get_versions
         run: |
-          FILE=$(npm pack .)
-          echo "file=$FILE" >> $GITHUB_OUTPUT
+      
+          VERSIONS_JSON=$(npm view $PACKAGE_NAME versions --json)
+          
+          TWO_LATEST_DESC=$(echo "$VERSIONS_JSON" | jq -r '.[-2:] | reverse | .[]')
+          
+          mapfile -t VERSION_ARRAY <<< "$TWO_LATEST_DESC"
+
+          LATEST_VERSION="${VERSION_ARRAY[0]}"
+          PREVIOUS_VERSION="${VERSION_ARRAY[1]}"
+
+          echo "latest_version=$LATEST_VERSION" >> $GITHUB_OUTPUT
+          echo "previous_version=$PREVIOUS_VERSION" >> $GITHUB_OUTPUT
+        
 
       - name: Get remote shasum
         id: remote
         run: |
-          REMOTE_HASH=$(npm view nd-test-mkh dist.integrity)
+          REMOTE_HASH=$(npm view ${{ env.PACKAGE_NAME }}@${{ steps.get_versions.outputs.LATEST_VERSION }} dist.integrity)
           echo "remote_hash=$REMOTE_HASH" >> $GITHUB_OUTPUT
+
+      - name: Pack local package
+        id: pack
+        run: |
+          node versionSubstitution.js ./package.json ${{ steps.get_versions.outputs.PREVIOUS_VERSION }}
+          FILE=$(npm pack .)
+          echo "file=$FILE" >> $GITHUB_OUTPUT
 
       - name: Calculate local shasum
         id: local
@@ -35,8 +58,6 @@ jobs:
           LOCAL_HASH=$(openssl dgst -sha512 -binary "${{ steps.pack.outputs.file }}" | openssl base64 | tr -d '\n')
           echo "local_hash=sha512-$LOCAL_HASH" >> $GITHUB_OUTPUT
 
-
-      # Сравнение хэшей
       - name: Compare hashes
         id: compare
         run: |
@@ -48,25 +69,14 @@ jobs:
             echo "should_publish=true" >> $GITHUB_OUTPUT
           fi
 
-      # Создание .npmrc с токеном
       - name: Configure npm token
         run: |
-          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+          echo "//${{ env.NPM_REGISTRY }}/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
 
       - name: Bump version
         if: steps.compare.outputs.should_publish == 'true'
         run: |
           npm version patch --no-git-tag-version
-
-          
-      - name: Commit and Push Version Bump
-        if: steps.compare.outputs.should_publish == 'true'
-        run: |
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add package.json
-          git commit -m "ci: bump version to $(node -p "require('./package.json').version")"
-          git push
 
       - name: Publish to npm
         if: steps.compare.outputs.should_publish == 'true'
