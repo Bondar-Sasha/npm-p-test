@@ -36,16 +36,8 @@ jobs:
           
           mapfile -t VERSION_ARRAY <<< "$TWO_LATEST_DESC"
 
-          echo "version_array: $VERSION_ARRAY"
-
-          LATEST_VERSION="${VERSION_ARRAY[0]}"
-          PREVIOUS_VERSION="${VERSION_ARRAY[1]}"
-
-          echo "latest_version: $LATEST_VERSION"
-          echo "previous_version: $PREVIOUS_VERSION"
-
-          echo "latest_version=$LATEST_VERSION" >> $GITHUB_OUTPUT
-          echo "previous_version=$PREVIOUS_VERSION" >> $GITHUB_OUTPUT
+          echo "latest_version=${VERSION_ARRAY[0]}" >> $GITHUB_OUTPUT
+          echo "previous_version=${VERSION_ARRAY[1]}" >> $GITHUB_OUTPUT
         
 
       - name: Get remote shasum
