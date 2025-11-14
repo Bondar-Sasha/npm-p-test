@@ -31,10 +31,8 @@ jobs:
 
       - name: Calculate local shasum
         id: local
-        run: |
-          HEX_HASH=$(sha1sum ${{ steps.pack.outputs.file }} | awk '{print $1}')
-          
-          LOCAL_HASH=$(echo $HEX_HASH | xxd -r -p | base64)
+        run: |          
+          LOCAL_HASH=$(openssl dgst -sha512 -binary "$TGZ_FILE" | openssl base64 | tr -d '\n')
           
           echo "local_hash=$LOCAL_HASH" >> $GITHUB_OUTPUT
 
