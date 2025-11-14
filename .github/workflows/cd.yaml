@@ -51,13 +51,13 @@ jobs:
       - name: Get remote shasum
         id: remote
         run: |
-          REMOTE_HASH=$(npm view ${{ env.PACKAGE_NAME }}@${{ steps.get_versions.outputs.LATEST_VERSION }} dist.integrity)
+          REMOTE_HASH=$(npm view ${{ env.PACKAGE_NAME }}@${{ steps.get_versions.outputs.latest_version }} dist.integrity)
           echo "remote_hash=$REMOTE_HASH" >> $GITHUB_OUTPUT
 
       - name: Pack local package
         id: pack
         run: |
-          node versionSubstitution.js ./package.json ${{ steps.get_versions.outputs.PREVIOUS_VERSION }}
+          node versionSubstitution.js ./package.json ${{ steps.get_versions.outputs.previous_version }}
           FILE=$(npm pack .)
           echo "file=$FILE" >> $GITHUB_OUTPUT
 
