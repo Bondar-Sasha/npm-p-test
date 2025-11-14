@@ -1,0 +1,62 @@
+name: CD
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Pack local package
+        id: pack
+        run: |
+          FILE=$(npm pack .)
+          echo "file=$FILE" >> $GITHUB_OUTPUT
+
+      - name: Get remote shasum
+        id: remote
+        run: |
+          REMOTE_HASH=$(npm view nd-test-mkh dist.shasum)
+          echo "remote_hash=$REMOTE_HASH" >> $GITHUB_OUTPUT
+
+      # Вычисление SHA-1 локального пакета
+      - name: Calculate local shasum
+        id: local
+        run: |
+          LOCAL_HASH=$(sha1sum ${{ steps.pack.outputs.file }} | awk '{print $1}')
+          echo "local_hash=$LOCAL_HASH" >> $GITHUB_OUTPUT
+
+      # Сравнение хэшей
+      - name: Compare hashes
+        id: compare
+        run: |
+          if [ "${{ steps.remote.outputs.remote_hash }}" = "${{ steps.local.outputs.local_hash }}" ]; then
+            echo "Hashes are equal, skipping publish."
+            echo "should_publish=false" >> $GITHUB_OUTPUT
+          else
+            echo "Hashes differ, will publish."
+            echo "should_publish=true" >> $GITHUB_OUTPUT
+
+      # Создание .npmrc с токеном
+      - name: Configure npm token
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+
+      - name: Bump version
+        if: steps.compare.outputs.should_publish == 'true'
+        run: |
+          npm version patch --no-git-tag-version
+
+      - name: Publish to npm
+        if: steps.compare.outputs.should_publish == 'true'
+        run: npm publish ./
