@@ -27,13 +27,22 @@ jobs:
         run: |
       
           VERSIONS_JSON=$(npm view ${{ env.PACKAGE_NAME }} versions --json)
-          
+
+          echo "versions_json: $VERSIONS_JSON"
+
           TWO_LATEST_DESC=$(echo "$VERSIONS_JSON" | jq -r '.[-2:] | reverse | .[]')
+
+          echo "two_latest_desc: $TWO_LATEST_DESC"
           
           mapfile -t VERSION_ARRAY <<< "$TWO_LATEST_DESC"
 
+          echo "version_array: $VERSION_ARRAY"
+
           LATEST_VERSION="${VERSION_ARRAY[0]}"
           PREVIOUS_VERSION="${VERSION_ARRAY[1]}"
+
+          echo "latest_version: $LATEST_VERSION"
+          echo "previous_version: $PREVIOUS_VERSION"
 
           echo "latest_version=$LATEST_VERSION" >> $GITHUB_OUTPUT
           echo "previous_version=$PREVIOUS_VERSION" >> $GITHUB_OUTPUT
@@ -49,8 +58,6 @@ jobs:
         id: pack
         run: |
           node versionSubstitution.js ./package.json ${{ steps.get_versions.outputs.PREVIOUS_VERSION }}
-          ls
-          cat package.json
           FILE=$(npm pack .)
           echo "file=$FILE" >> $GITHUB_OUTPUT
 
