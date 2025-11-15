@@ -81,7 +81,7 @@ jobs:
         run: |
           LOCAL_HASH=$(openssl dgst -sha512 -binary "${{ steps.shared_pack.outputs.shared_file }}" | openssl base64 | tr -d '\n')
 
-          if [ "${{ steps.get_shared_data.outputs.shared_remote_hash }}" = "$LOCAL_HASH" ]; then
+          if [ "${{ steps.get_shared_data.outputs.shared_remote_hash }}" = $LOCAL_HASH ]; then
           echo "Hashes are equal, skipping publish."
           echo "should_publish_shared=false" >> $GITHUB_OUTPUT
           else
@@ -94,7 +94,7 @@ jobs:
         working-directory: ${{ env.SDK_PACKAGE_PATH }}
         run: |
           LOCAL_HASH=$(openssl dgst -sha512 -binary "${{ steps.sdk_pack.outputs.sdk_file }}" | openssl base64 | tr -d '\n')
-          if [ "${{ steps.get_sdk_data.outputs.sdk_remote_hash }}" = "$LOCAL_HASH" ]; then
+          if [ "${{ steps.get_sdk_data.outputs.sdk_remote_hash }}" = $LOCAL_HASH ]; then
           echo "Hashes are equal, skipping publish."
           echo "should_publish_sdk=false" >> $GITHUB_OUTPUT
           else
