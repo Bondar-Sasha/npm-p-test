@@ -79,7 +79,7 @@ jobs:
         id: shared_hashes
         working-directory: ${{ env.SHARED_PACKAGE_PATH }}
         run: |
-          LOCAL_HASH=$(openssl dgst -sha512 -binary "${{ steps.shared_pack.outputs.shared_file }}" | openssl base64 | tr -d '\n')
+          LOCAL_HASH="$(openssl dgst -sha512 -binary "${{ steps.shared_pack.outputs.shared_file }}" | openssl base64 | tr -d '\n')"
           REMOTE_HASH="${{ steps.get_shared_data.outputs.shared_remote_hash }}"
       
           if [ "$REMOTE_HASH" = "$LOCAL_HASH" ]; then
@@ -95,7 +95,7 @@ jobs:
         id: sdk_hashes
         working-directory: ${{ env.SDK_PACKAGE_PATH }}
         run: |
-          LOCAL_HASH=$(openssl dgst -sha512 -binary "${{ steps.sdk_pack.outputs.sdk_file }}" | openssl base64 | tr -d '\n')
+          LOCAL_HASH="$(openssl dgst -sha512 -binary "${{ steps.sdk_pack.outputs.sdk_file }}" | openssl base64 | tr -d '\n')"
           REMOTE_HASH="${{ steps.get_sdk_data.outputs.sdk_remote_hash }}"
       
           if [ "$REMOTE_HASH" = "$LOCAL_HASH" ]; then
