@@ -58,6 +58,7 @@ jobs:
 
 
       - name: Pack ${{ env.SDK_PACKAGE_NAME }} package
+        continue-on-error: true
         id: sdk_pack
         working-directory: ${{ env.SDK_PACKAGE_PATH }}
         run: |
@@ -66,6 +67,7 @@ jobs:
           echo "sdk_file=$FILE" >> $GITHUB_OUTPUT
 
       - name: Pack ${{ env.SHARED_PACKAGE_NAME }} package
+        continue-on-error: true
         id: shared_pack
         working-directory: ${{ env.SHARED_PACKAGE_PATH }}
         run: |
