@@ -80,27 +80,30 @@ jobs:
         working-directory: ${{ env.SHARED_PACKAGE_PATH }}
         run: |
           LOCAL_HASH=$(openssl dgst -sha512 -binary "${{ steps.shared_pack.outputs.shared_file }}" | openssl base64 | tr -d '\n')
-
-          if [ "${{ steps.get_shared_data.outputs.shared_remote_hash }}" = $LOCAL_HASH ]; then
-          echo "Hashes are equal, skipping publish."
-          echo "should_publish_shared=false" >> $GITHUB_OUTPUT
+          REMOTE_HASH="${{ steps.get_shared_data.outputs.shared_remote_hash }}"
+      
+          if [ "$REMOTE_HASH" = "$LOCAL_HASH" ]; then
+            echo "Hashes are equal, skipping publish."
+            echo "should_publish_shared=false" >> $GITHUB_OUTPUT
           else
-          echo "Hashes differ, will publish."
-          echo "should_publish_shared=true" >> $GITHUB_OUTPUT
+            echo "Hashes differ, will publish."
+            echo "should_publish_shared=true" >> $GITHUB_OUTPUT
           fi
+        
 
       - name: ${{ env.SDK_PACKAGE_NAME }} hashes processing
         id: sdk_hashes
         working-directory: ${{ env.SDK_PACKAGE_PATH }}
         run: |
           LOCAL_HASH=$(openssl dgst -sha512 -binary "${{ steps.sdk_pack.outputs.sdk_file }}" | openssl base64 | tr -d '\n')
-          if [ "${{ steps.get_sdk_data.outputs.sdk_remote_hash }}" = $LOCAL_HASH ]; then
-          echo "Hashes are equal, skipping publish."
-          echo "should_publish_sdk=false" >> $GITHUB_OUTPUT
+          REMOTE_HASH="${{ steps.get_sdk_data.outputs.sdk_remote_hash }}"
+      
+          if [ "$REMOTE_HASH" = "$LOCAL_HASH" ]; then
+            echo "Hashes are equal, skipping publish."
+            echo "should_publish_sdk=false" >> $GITHUB_OUTPUT
           else
-          echo "Hashes differ, will publish."
-          echo "should_publish_sdk=true" >> $GITHUB_OUTPUT
-          fi
+            echo "Hashes differ, will publish."
+            echo "should_publish_sdk=true" >> $GITHUB_OUTPUT
 
       - name: Bump ${{ env.SHARED_PACKAGE_NAME }} version
         working-directory: ${{ env.SHARED_PACKAGE_PATH }}
