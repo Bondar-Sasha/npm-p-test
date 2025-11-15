@@ -22,34 +22,24 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Get Last Two NPM Versions
-        id: get_versions
+      - name: Get last package version
+        id: get_version
         run: |
       
-          VERSIONS_JSON=$(npm view ${{ env.PACKAGE_NAME }} versions --json)
+          VERSION_JSON=$(npm view ${{ env.PACKAGE_NAME }} version)
 
-          echo "versions_json: $VERSIONS_JSON"
-
-          TWO_LATEST_DESC=$(echo "$VERSIONS_JSON" | jq -r '.[-2:] | reverse | .[]')
-
-          echo "two_latest_desc: $TWO_LATEST_DESC"
-          
-          mapfile -t VERSION_ARRAY <<< "$TWO_LATEST_DESC"
-
-          echo "latest_version=${VERSION_ARRAY[0]}" >> $GITHUB_OUTPUT
-          echo "previous_version=${VERSION_ARRAY[1]}" >> $GITHUB_OUTPUT
+          echo "latest_version=${VERSION_JSON}" >> $GITHUB_OUTPUT
         
-
       - name: Get remote shasum
         id: remote
         run: |
-          REMOTE_HASH=$(npm view ${{ env.PACKAGE_NAME }}@${{ steps.get_versions.outputs.latest_version }} dist.integrity)
+          REMOTE_HASH=$(npm view ${{ env.PACKAGE_NAME }}@${{ steps.get_version.outputs.latest_version }} dist.integrity)
           echo "remote_hash=$REMOTE_HASH" >> $GITHUB_OUTPUT
 
       - name: Pack local package
         id: pack
         run: |
-          node versionSubstitution.js ./package.json ${{ steps.get_versions.outputs.latest_version }}
+          npm version ${{ steps.get_version.outputs.latest_version }}
           FILE=$(npm pack .)
           echo "file=$FILE" >> $GITHUB_OUTPUT
 
