@@ -68,6 +68,6 @@ jobs:
       - name: Publish to npm
         if: steps.compare.outputs.should_publish == 'true'
         run: |
+          echo "//${{ env.NPM_REGISTRY }}/:_authToken=${{ secrets.NPM_TOKEN }}" > ./.npmrc
           ls -la
-          echo "//${{ env.NPM_REGISTRY }}/:_authToken=${{ secrets.NPM_TOKEN }}" > .npmrc
           npm publish ./
