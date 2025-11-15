@@ -137,4 +137,4 @@ jobs:
 
           git commit -m "Synchronizing npm package versions"
           
-          git push origin ${{env.BRANCH}}
+          git push origin ${{env.BRANCH}} --force
