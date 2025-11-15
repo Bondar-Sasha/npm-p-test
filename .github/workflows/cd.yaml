@@ -67,6 +67,6 @@ jobs:
 
       - name: Publish to npm
         if: steps.compare.outputs.should_publish == 'true'
-        run: npm publish ./
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          echo "//${{ env.NPM_REGISTRY }}/:_authToken=${{ secrets.NPM_TOKEN }}" > .npmrc
+          npm publish ./
