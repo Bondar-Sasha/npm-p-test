@@ -39,7 +39,7 @@ jobs:
       - name: Pack local package
         id: pack
         run: |
-          npm version ${{ steps.get_version.outputs.latest_version }}
+          npm version ${{ steps.get_version.outputs.latest_version }} --no-git-tag-version
           FILE=$(npm pack .)
           echo "file=$FILE" >> $GITHUB_OUTPUT
 
