@@ -58,7 +58,6 @@ jobs:
 
 
       - name: Pack ${{ env.SDK_PACKAGE_NAME }} package
-        continue-on-error: true
         id: sdk_pack
         working-directory: ${{ env.SDK_PACKAGE_PATH }}
         run: |
@@ -68,14 +67,13 @@ jobs:
           
           if npm version "$VERSION" --no-git-tag-version; then
             FILE=$(npm pack .)
-            echo "shared_file=$FILE" >> "$GITHUB_OUTPUT"
+            echo "sdk_file=$FILE" >> "$GITHUB_OUTPUT"
           else
             FILE=$(npm pack .)
-            echo "shared_file=$FILE" >> "$GITHUB_OUTPUT"
+            echo "sdk_file=$FILE" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Pack ${{ env.SHARED_PACKAGE_NAME }} package
-        continue-on-error: true
         id: shared_pack
         working-directory: ${{ env.SHARED_PACKAGE_PATH }}
         run: |
