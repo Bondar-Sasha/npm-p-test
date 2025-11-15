@@ -21,6 +21,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+          token: ${{ secrets.REPO_TOKEN }} 
+          fetch-depth: 0
+      - name: Checkout main branch
+        run: |
+          git checkout main
 
       - name: Get last package version
         id: get_version
@@ -61,13 +66,24 @@ jobs:
           fi
 
       - name: Bump version
+        id: bump_version
         if: steps.compare.outputs.should_publish == 'true'
         run: |
-          npm version patch --no-git-tag-version
+          NEW_LOCAL_VERSION=$(npm version patch --no-git-tag-version)
+          echo "new_local_version=$NEW_LOCAL_VERSION" >> $GITHUB_OUTPUT
 
       - name: Publish to npm
         if: steps.compare.outputs.should_publish == 'true'
         run: |
           echo "//${{ env.NPM_REGISTRY }}/:_authToken=${{ secrets.NPM_TOKEN }}" > ./.npmrc
-          ls -la
           npm publish
+          npm version ${{ steps.bump_version.outputs.new_local_version }} --no-git-tag-version
+      - name: Sync repository
+        if: steps.compare.outputs.should_publish == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "Bump version to $(node -p "require('./package.json').version")"
+          
+          git push origin main
