@@ -158,15 +158,11 @@ jobs:
           npm publish
 
       - name: Sync repository
-        run: |
-          set -e
-
+        continue-on-error: true
+        run: |          
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          if git commit -m "Synchronizing npm package versions"; then
-           git push origin ${{env.BRANCH}} --force
-          else
-           echo "No changes to commit"
-          fi
+          git commit -m "Synchronizing npm package versions"
           
+          git push origin ${{env.BRANCH}} --force
