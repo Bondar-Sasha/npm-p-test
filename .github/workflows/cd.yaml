@@ -3,7 +3,7 @@ name: CD
 env:
   NODE_VERSION: '20'
   PACKAGE_NAME: 'nd-test-mkh'
-  NPM_REGISTRY: 'https://registry.npmjs.org/'
+  NPM_REGISTRY: 'registry.npmjs.org/'
 
 on:
   push:
