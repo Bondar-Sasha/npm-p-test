@@ -70,4 +70,4 @@ jobs:
         run: |
           echo "//${{ env.NPM_REGISTRY }}/:_authToken=${{ secrets.NPM_TOKEN }}" > ./.npmrc
           ls -la
-          npm publish ./
+          npm publish
