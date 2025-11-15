@@ -62,18 +62,34 @@ jobs:
         id: sdk_pack
         working-directory: ${{ env.SDK_PACKAGE_PATH }}
         run: |
-          npm version ${{ steps.get_sdk_data.outputs.sdk_latest_version }} --no-git-tag-version
-          FILE=$(npm pack .)
-          echo "sdk_file=$FILE" >> $GITHUB_OUTPUT
+          set -e
+
+          VERSION="${{ steps.get_shared_data.outputs.shared_latest_version }}"
+          
+          if npm version "$VERSION" --no-git-tag-version; then
+            FILE=$(npm pack .)
+            echo "shared_file=$FILE" >> "$GITHUB_OUTPUT"
+          else
+            FILE=$(npm pack .)
+            echo "shared_file=$FILE" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Pack ${{ env.SHARED_PACKAGE_NAME }} package
         continue-on-error: true
         id: shared_pack
         working-directory: ${{ env.SHARED_PACKAGE_PATH }}
         run: |
-          npm version ${{ steps.get_shared_data.outputs.shared_latest_version }} --no-git-tag-version
-          FILE=$(npm pack .)
-          echo "shared_file=$FILE" >> $GITHUB_OUTPUT
+          set -e
+
+          VERSION="${{ steps.get_shared_data.outputs.shared_latest_version }}"
+          
+          if npm version "$VERSION" --no-git-tag-version; then
+            FILE=$(npm pack .)
+            echo "shared_file=$FILE" >> "$GITHUB_OUTPUT"
+          else
+            FILE=$(npm pack .)
+            echo "shared_file=$FILE" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: ${{ env.SHARED_PACKAGE_NAME }} hashes processing
         id: shared_hashes
