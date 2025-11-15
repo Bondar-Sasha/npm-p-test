@@ -60,14 +60,12 @@ jobs:
             echo "should_publish=true" >> $GITHUB_OUTPUT
           fi
 
-      - name: Configure npm token
-        run: |
-          echo "//${{ env.NPM_REGISTRY }}/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
-
       - name: Bump version
         if: steps.compare.outputs.should_publish == 'true'
         run: |
           npm version patch --no-git-tag-version
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish to npm
         if: steps.compare.outputs.should_publish == 'true'
