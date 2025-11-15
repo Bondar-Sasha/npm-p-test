@@ -1,24 +1,29 @@
-name: CD
+name: Publish NPM packages
 
 env:
   NODE_VERSION: '20'
-  PACKAGE_NAME: 'nd-test-mkh'
+  BRANCH: 'main'
+
+  SDK_PACKAGE_NAME: 'nd-test-ppp-1'
+  SHARED_PACKAGE_NAME: 'nd-test-ppp-2'
+
+  SDK_PACKAGE_PATH: './fir'
+  SHARED_PACKAGE_PATH: './sec'
+
   NPM_REGISTRY: 'registry.npmjs.org'
 
 on:
   push:
-    branches: [main]
+    branches: ['main']
 
 jobs:
-  publish:
+  publication:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -26,65 +31,108 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           token: ${{ secrets.REPO_TOKEN }} 
           fetch-depth: 0
-      - name: Checkout main branch
-        run: |
-          git checkout main
 
-      - name: Get last package version
-        id: get_version
+      - name: Checkout ${{ env.BRANCH }} branch
+        run: git checkout ${{ env.BRANCH }}
+
+
+      - name: Get ${{ env.SHARED_PACKAGE_NAME }} remote data
+        id: get_shared_data
         run: |
       
-          VERSION_JSON=$(npm view ${{ env.PACKAGE_NAME }} version)
+          VERSION=$(npm view ${{ env.SHARED_PACKAGE_NAME }} version)
+          REMOTE_HASH=$(npm view ${{ env.SHARED_PACKAGE_NAME }}@$VERSION dist.integrity)
 
-          echo "latest_version=${VERSION_JSON}" >> $GITHUB_OUTPUT
-        
-      - name: Get remote shasum
-        id: remote
-        run: |
-          REMOTE_HASH=$(npm view ${{ env.PACKAGE_NAME }}@${{ steps.get_version.outputs.latest_version }} dist.integrity)
-          echo "remote_hash=$REMOTE_HASH" >> $GITHUB_OUTPUT
+          echo "shared_latest_version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "shared_remote_hash=${REMOTE_HASH}" >> $GITHUB_OUTPUT
 
-      - name: Pack local package
-        id: pack
+      - name: Get ${{ env.SDK_PACKAGE_NAME }} remote data
+        id: get_sdk_data
         run: |
-          npm version ${{ steps.get_version.outputs.latest_version }} --no-git-tag-version
+      
+          VERSION=$(npm view ${{ env.SDK_PACKAGE_NAME }} version)
+          REMOTE_HASH=$(npm view ${{ env.SDK_PACKAGE_NAME }}@$VERSION dist.integrity)
+
+          echo "sdk_latest_version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "sdk_remote_hash=${REMOTE_HASH}" >> $GITHUB_OUTPUT
+
+
+      - name: Pack ${{ env.SDK_PACKAGE_NAME }} package
+        id: sdk_pack
+        working-directory: ${{ env.SDK_PACKAGE_PATH }}
+        run: |
+          npm version ${{ steps.get_sdk_data.outputs.sdk_latest_version }} --no-git-tag-version
           FILE=$(npm pack .)
-          echo "file=$FILE" >> $GITHUB_OUTPUT
+          echo "sdk_file=$FILE" >> $GITHUB_OUTPUT
 
-      - name: Calculate local shasum
-        id: local
+      - name: Pack ${{ env.SHARED_PACKAGE_NAME }} package
+        id: shared_pack
+        working-directory: ${{ env.SHARED_PACKAGE_PATH }}
         run: |
-          LOCAL_HASH=$(openssl dgst -sha512 -binary "${{ steps.pack.outputs.file }}" | openssl base64 | tr -d '\n')
-          echo "local_hash=sha512-$LOCAL_HASH" >> $GITHUB_OUTPUT
+          npm version ${{ steps.get_shared_data.outputs.shared_latest_version }} --no-git-tag-version
+          FILE=$(npm pack .)
+          echo "shared_file=$FILE" >> $GITHUB_OUTPUT
 
-      - name: Compare hashes
-        id: compare
+      - name: ${{ env.SHARED_PACKAGE_NAME }} hashes processing
+        id: shared_hashes
+        working-directory: ${{ env.SHARED_PACKAGE_PATH }}
         run: |
-          if [ "${{ steps.remote.outputs.remote_hash }}" = "${{ steps.local.outputs.local_hash }}" ]; then
-            echo "Hashes are equal, skipping publish."
-            echo "should_publish=false" >> $GITHUB_OUTPUT
+          LOCAL_HASH=$(openssl dgst -sha512 -binary "${{ steps.shared_pack.outputs.shared_file }}" | openssl base64 | tr -d '\n')
+
+          if [ "${{ steps.get_shared_data.outputs.shared_remote_hash }}" = "$LOCAL_HASH" ]; then
+          echo "Hashes are equal, skipping publish."
+          echo "should_publish_shared=false" >> $GITHUB_OUTPUT
           else
-            echo "Hashes differ, will publish."
-            echo "should_publish=true" >> $GITHUB_OUTPUT
+          echo "Hashes differ, will publish."
+          echo "should_publish_shared=true" >> $GITHUB_OUTPUT
           fi
 
-      - name: Bump version
-        id: bump_version
-        if: steps.compare.outputs.should_publish == 'true'
+      - name: ${{ env.SDK_PACKAGE_NAME }} hashes processing
+        id: sdk_hashes
+        working-directory: ${{ env.SDK_PACKAGE_PATH }}
+        run: |
+          LOCAL_HASH=$(openssl dgst -sha512 -binary "${{ steps.sdk_pack.outputs.sdk_file }}" | openssl base64 | tr -d '\n')
+          if [ "${{ steps.get_sdk_data.outputs.sdk_remote_hash }}" = "$LOCAL_HASH" ]; then
+          echo "Hashes are equal, skipping publish."
+          echo "should_publish_sdk=false" >> $GITHUB_OUTPUT
+          else
+          echo "Hashes differ, will publish."
+          echo "should_publish_sdk=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Bump ${{ env.SHARED_PACKAGE_NAME }} version
+        working-directory: ${{ env.SHARED_PACKAGE_PATH }}
+        if: steps.shared_hashes.outputs.should_publish_shared == 'true'
         run: |
           npm version patch --no-git-tag-version
+          git add package.json
 
-      - name: Publish to npm
-        if: steps.compare.outputs.should_publish == 'true'
+      - name: Bump ${{ env.SDK_PACKAGE_NAME }} version
+        working-directory: ${{ env.SDK_PACKAGE_PATH }}
+        if: steps.sdk_hashes.outputs.should_publish_sdk == 'true'
+        run: |
+          npm version patch --no-git-tag-version
+          git add package.json
+
+      - name: ${{ env.SHARED_PACKAGE_NAME }} publication
+        working-directory: ${{ env.SHARED_PACKAGE_PATH }}
+        if: steps.shared_hashes.outputs.should_publish_shared == 'true'
         run: |
           echo "//${{ env.NPM_REGISTRY }}/:_authToken=${{ secrets.NPM_TOKEN }}" > ./.npmrc
           npm publish
+
+      - name: ${{ env.SDK_PACKAGE_NAME }} publication
+        working-directory: ${{ env.SDK_PACKAGE_PATH }}
+        if: steps.sdk_hashes.outputs.should_publish_sdk == 'true'
+        run: |
+          echo "//${{ env.NPM_REGISTRY }}/:_authToken=${{ secrets.NPM_TOKEN }}" > ./.npmrc
+          npm publish
+
       - name: Sync repository
-        if: steps.compare.outputs.should_publish == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add package.json
-          git commit -m "Bump version to $(node -p "require('./package.json').version")"
+
+          git commit -m "Synchronizing npm package versions"
           
-          git push origin main
+          git push origin ${{env.BRANCH}}
