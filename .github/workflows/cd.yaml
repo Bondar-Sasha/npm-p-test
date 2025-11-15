@@ -113,6 +113,9 @@ jobs:
         run: |
           LOCAL_HASH=$(openssl dgst -sha512 -binary "$SDK_FILE" | openssl base64 | tr -d '\n')
           REMOTE_HASH="$SDK_REMOTE_HASH"
+
+          echo "LOCAL_HASH: $LOCAL_HASH"
+          echo "REMOTE_HASH: $REMOTE_HASH"
       
           if [ "$REMOTE_HASH" = "$LOCAL_HASH" ]; then
             echo "Hashes are equal, skipping publish."
