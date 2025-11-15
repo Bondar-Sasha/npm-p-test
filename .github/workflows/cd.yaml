@@ -93,7 +93,7 @@ jobs:
         id: shared_hashes
         working-directory: ${{ env.SHARED_PACKAGE_PATH }}
         run: |
-          LOCAL_HASH=$(openssl dgst -sha512 -binary "$SHARED_FILE" | openssl base64 | tr -d '\n')
+          LOCAL_HASH="sha512-$(openssl dgst -sha512 -binary "$SHARED_FILE" | openssl base64 | tr -d '\n')"
           REMOTE_HASH="$SHARED_REMOTE_HASH"
       
           if [ "$REMOTE_HASH" = "$LOCAL_HASH" ]; then
@@ -111,7 +111,7 @@ jobs:
         id: sdk_hashes
         working-directory: ${{ env.SDK_PACKAGE_PATH }}
         run: |
-          LOCAL_HASH=$(openssl dgst -sha512 -binary "$SDK_FILE" | openssl base64 | tr -d '\n')
+          LOCAL_HASH="sha512-$(openssl dgst -sha512 -binary "$SDK_FILE" | openssl base64 | tr -d '\n')"
           REMOTE_HASH="$SDK_REMOTE_HASH"
 
           echo "LOCAL_HASH: $LOCAL_HASH"
